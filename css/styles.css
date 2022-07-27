@@ -28,3 +28,10 @@
     background-color: crimson;
     position: absolute;
 }
+
+button.disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+    color: #666666;
+    background-color: #eeeeee;
+}

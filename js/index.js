@@ -1,9 +1,9 @@
-const container = document.querySelector('.container');
+const container = document.querySelector('.game-container');
 const MAX_BLOCKS = 15;
 let blocks = [];
 let blocksAUX = [];
 let score = 0;
-document.getElementById('score').innerHTML = `Score: ${score}`;
+document.getElementById('score').innerHTML = score;
 let userBlock;
 const boardWidth = 560;
 const boardHeight = 300;
@@ -17,6 +17,7 @@ let ballCurrentPosition = ballStartPosition.slice();
 let xPosition = randomPosition();
 let yPosition = 2;
 let timerId;
+let flag = true;
 
 function randomPosition() {
     const arr = [-2, 2];
@@ -29,9 +30,16 @@ const addBlocks = () => {
         for (let i = 1; i <= MAX_BLOCKS ; i++) {
             const block = new Block(x, y);
             const divBlock = document.createElement('div');
-            divBlock.classList.add('block');
             divBlock.style.left = block.bottomLeft[0] + 'px';
             divBlock.style.bottom = block.bottomLeft[1] + 'px';
+            divBlock.classList.add('block');
+            if (i <= 5) {
+                divBlock.classList.add('red');
+            } else if (i <= 10) {
+                divBlock.classList.add('green');
+            } else {
+                divBlock.classList.add('orange');
+            }
             container.appendChild(divBlock);
             x += 110;
             if ( i % 5 == 0) {
@@ -41,7 +49,7 @@ const addBlocks = () => {
             blocks.push(block);
         }
     } else {
-        const blockElements = document.querySelectorAll('div.container > div');
+        const blockElements = document.querySelectorAll('div.game-container > div');
         for (let i = 0; i < blockElements.length - 2; i++) {
             if (!blockElements[i].classList.contains('block')) {
                 blockElements[i].classList.add('block');
@@ -102,42 +110,41 @@ function moveBall() {
 }
 
 
-document.getElementById('start').addEventListener('click', startGame);
-
-document.getElementById('pause').addEventListener('click', pauseGame);
+document.getElementById('play-pause').addEventListener('click', playPauseGame);
 
 document.getElementById('restart').addEventListener('click', restartGame);
 
-function startGame() {
-    if (timerId) clearInterval(timerId);
-    timerId = setInterval(moveBall, 30);
-    this.classList.add('disabled');
-    document.addEventListener('keydown', moveUser);
-    document.getElementById('pause').classList.remove('disabled');
-    document.getElementById('restart').classList.remove('disabled');
-}
-
-function pauseGame(e) {
-    container.classList.toggle('paused');
-    if (container.classList.contains('paused')) {
+function playPauseGame() {
+    const iconButton = document.querySelector('#play-pause i')
+    container.classList.toggle('active');
+    if (!container.classList.contains('active')) {
         clearInterval(timerId);
-        e.target.innerText = 'RESUME';
+        document.removeEventListener('keydown', moveUser);
+        iconButton.classList.add('bi-play-fill');
+        iconButton.classList.remove('bi-pause-fill');
     } else {
         if (timerId) clearInterval(timerId);
         timerId = setInterval(moveBall, 30);
-        e.target.innerText = 'PAUSE';
+        document.addEventListener('keydown', moveUser);
+        iconButton.classList.add('bi-pause-fill');
+        iconButton.classList.remove('bi-play-fill');
+        if (flag) {
+            flag = false;
+            document.getElementById('restart').classList.remove('disabled');
+        }
     }
 }
 
 function restartGame() {
     if (timerId) clearInterval(timerId);
-    document.getElementById('start').classList.remove('disabled');
-    document.getElementById('pause').innerText = 'PAUSE';
-    document.getElementById('pause').classList.add('disabled');
+    container.classList.remove('active');
+    document.querySelector('#play-pause i').classList.add('bi-play-fill');
+    document.querySelector('#play-pause i').classList.remove('bi-pause-fill');
+    document.querySelector('#play-pause').classList.remove('disabled');
     document.getElementById('restart').classList.add('disabled');
-    document.getElementById('state').innerHTML = '';
+    flag = true;
     score = 0;
-    document.getElementById('score').innerHTML = `Score: ${score}`;
+    document.getElementById('score').innerHTML = score;
     xPosition = randomPosition();
     yPosition = 2;
     userCurrentPosition = userStartPosition.slice();
@@ -150,7 +157,7 @@ function restartGame() {
 function stopGame() {
     if (timerId) clearInterval(timerId);
     document.removeEventListener('keydown', moveUser);
-    document.getElementById('pause').classList.add('disabled');
+    document.querySelector('#play-pause').classList.add('disabled');
 }
 
 function checkForColisions() {
@@ -164,10 +171,10 @@ function checkForColisions() {
             blocksAUX.splice(i, 1);
             changeDirection();
             score++;
-            document.getElementById('score').innerHTML = `Score: ${score}`;
+            document.getElementById('score').innerHTML = score;
             if (blocksAUX.length == 0) {
                 stopGame();
-                document.getElementById('state').innerHTML = 'You Win!!';
+                alert('You Win!!');
             }
         }
     }
@@ -182,7 +189,7 @@ function checkForColisions() {
 
     if (ballCurrentPosition[1] <= 0) {
         stopGame();
-        document.getElementById('state').innerHTML = 'Game Over!!';
+        alert('Game Over!!');
     }
 
     

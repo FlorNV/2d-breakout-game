@@ -1,23 +1,45 @@
+.bg-darkblue {
+    background-color: #003566;
+}
 
 .container {
+    height: 100vh;
+}
+
+.score {
+    font-size: 1.5rem;
+}
+
+.game-container {
     width: 560px;
     height: 300px;
-    border: 1px solid dodgerblue;
-    margin: 6rem auto;
+    outline: 0.4rem solid #2076c7;
+    margin: 3rem auto;
     position: relative;
 }
 
 .block{
     height: 20px;
     width: 100px;
-    background-color: dodgerblue;
     position: absolute;
+}
+
+.red {
+    background-color: #ef233c;
+}
+
+.green {
+    background-color: #0ead69;
+}
+
+.orange {
+    background-color: #fb8b24;
 }
 
 .user{
     height: 20px;
     width: 100px;
-    background-color: purple;
+    background-color: #2076c7;
     position: absolute;
 }
 
@@ -25,13 +47,15 @@
     height: 20px;
     width: 20px;
     border-radius: 100%;
-    background-color: crimson;
+    background-color: #dad7cd;
     position: absolute;
+}
+
+.button-container button {
+    font-size: 1.5rem;
 }
 
 button.disabled {
     cursor: not-allowed;
     pointer-events: none;
-    color: #666666;
-    background-color: #eeeeee;
 }

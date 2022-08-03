@@ -1,17 +1,19 @@
 const container = document.querySelector(".game-container");
 const ROW_BLOCKS = 3;
 const COLS_BLOCKS = 5;
-const BOARD_WIDTH = 560;
-const BOARD_HEIGHT = 300;
+const BOARD_WIDTH = 620;
+const BOARD_HEIGHT = 400;
 const BALL_RADIUS = 10;
 const BLOCK_WIDTH = 100;
 const BLOCK_HEIGHT = 20;
-const MARGIN = 10;
-let blocks = new Array(ROW_BLOCKS);
+const MARGIN = 20;
+let blocks;
 let user = null;
 let ball = null;
 let score = 0;
+let lifes = 3;
 document.getElementById("score").innerHTML = score;
+document.getElementById("lifes").innerHTML = lifes;
 let timerId;
 let flag = true;
 
@@ -36,15 +38,15 @@ const createBall = () => {
   };
 };
 
-const addBlocks = () => {
-  if (!blocks.length == 0) {
-    blocks = [];
-    while (container.firstChild) {
-      container.removeChild(container.firstChild);
-    }
+const cleanContainer = () => {
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
   }
+};
 
+const addBlocks = () => {
   let y = MARGIN;
+  blocks = new Array(ROW_BLOCKS);
   for (let r = 0; r < ROW_BLOCKS; r++) {
     blocks[r] = new Array(COLS_BLOCKS);
     let x = MARGIN;
@@ -63,11 +65,11 @@ const addBlocks = () => {
       blockElement.classList.add(`r-${r}`);
       blockElement.classList.add(`c-${c}`);
       if (r == 0) {
-        blockElement.classList.add("red");
+        blockElement.classList.add("bg-red");
       } else if (r == 1) {
-        blockElement.classList.add("green");
+        blockElement.classList.add("bg-green");
       } else {
-        blockElement.classList.add("orange");
+        blockElement.classList.add("bg-orange");
       }
       container.appendChild(blockElement);
       x += BLOCK_WIDTH + MARGIN;
@@ -80,9 +82,8 @@ const addUserBlock = () => {
   createUserBlock();
   const userBlockElement = document.createElement("div");
   userBlockElement.classList.add("user");
-  userBlockElement.style.left = user.x + "px";
-  userBlockElement.style.top = user.y + "px";
   container.appendChild(userBlockElement);
+  positionUserBlock();
 };
 
 const addBall = () => {
@@ -96,6 +97,12 @@ const addBall = () => {
 addBlocks();
 addUserBlock();
 addBall();
+
+function positionUserBlock() {
+  const userBlockElement = document.querySelector(".user");
+  userBlockElement.style.left = user.x + "px";
+  userBlockElement.style.top = user.y + "px";
+}
 
 function positionBall() {
   const ballElement = document.querySelector(".ball");
@@ -129,7 +136,6 @@ function moveUser(e) {
 }
 
 document.getElementById("play-pause").addEventListener("click", playPauseGame);
-
 document.getElementById("restart").addEventListener("click", restartGame);
 
 function playPauseGame() {
@@ -142,7 +148,7 @@ function playPauseGame() {
     iconButton.classList.remove("bi-pause-fill");
   } else {
     if (timerId) clearInterval(timerId);
-    timerId = setInterval(moveBall, 20);
+    timerId = setInterval(moveBall, 15);
     document.addEventListener("keydown", moveUser);
     iconButton.classList.add("bi-pause-fill");
     iconButton.classList.remove("bi-play-fill");
@@ -162,7 +168,10 @@ function restartGame() {
   document.getElementById("restart").classList.add("disabled");
   flag = true;
   score = 0;
+  lifes = 3;
   document.getElementById("score").innerHTML = score;
+  document.getElementById("lifes").innerHTML = lifes;
+  cleanContainer();
   addBlocks();
   addUserBlock();
   addBall();
@@ -181,15 +190,11 @@ function checkForCollisions() {
       let block = blocks[r][c];
       if (!block.broken) {
         if (
-          ball.x > block.x &&
-          ball.x < block.x + block.width &&
+          ball.x + ball.r > block.x &&
+          ball.x - ball.r < block.x + block.width &&
           ball.y + ball.r > block.y &&
           ball.y - ball.r < block.y + block.height
         ) {
-          // document.getElementById("play-pause").click();
-          // const blockElement = document.querySelector(`div.r-${r}.c-${c}`);
-          // blockElement.classList.add("bg-light");
-
           block.broken = true;
           const blockElement = document.querySelector(`div.r-${r}.c-${c}`);
           blockElement.classList.remove("block");
@@ -225,20 +230,33 @@ function checkForCollisions() {
   }
 
   if (ball.y + ball.r > BOARD_HEIGHT) {
-    stopGame();
-    const message = document.createElement("div");
-    message.textContent = "game over!!";
-    message.classList.add("message");
-    message.classList.add("text-danger");
-    message.setAttribute("id", "message");
-    container.appendChild(message);
+    if (lifes > 0) {
+      document.getElementById("play-pause").click();
+      createBall();
+      positionBall();
+      createUserBlock();
+      positionUserBlock();
+      lifes--;
+      document.getElementById("lifes").innerHTML = lifes;
+      if (lifes == 0) {
+        stopGame();
+        const message = document.createElement("div");
+        message.textContent = "game over!!";
+        message.classList.add("message");
+        message.classList.add("text-danger");
+        message.setAttribute("id", "message");
+        container.appendChild(message);
+      }
+    }
   }
 
   const blockElements = document.querySelectorAll("div.block");
   if (blockElements.length == 0) {
     stopGame();
     const message = document.createElement("div");
-    message.textContent = "you win!!";
+    message.innerHTML = `
+      <img class="cup" src="./img/cup.png" alt="">you win!!
+    `;
     message.classList.add("message");
     message.classList.add("text-info");
     message.setAttribute("id", "message");

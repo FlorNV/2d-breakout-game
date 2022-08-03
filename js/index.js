@@ -1,113 +1,131 @@
 const container = document.querySelector(".game-container");
-const MAX_BLOCKS = 15;
-let blocks = [];
-let blocksAUX = [];
+const ROW_BLOCKS = 3;
+const COLS_BLOCKS = 5;
+const BOARD_WIDTH = 560;
+const BOARD_HEIGHT = 300;
+const BALL_RADIUS = 10;
+const BLOCK_WIDTH = 100;
+const BLOCK_HEIGHT = 20;
+const MARGIN = 10;
+let blocks = new Array(ROW_BLOCKS);
+let user = null;
+let ball = null;
 let score = 0;
 document.getElementById("score").innerHTML = score;
-let userBlock;
-const boardWidth = 560;
-const boardHeight = 300;
-const ballDiameter = 20;
-const userBlockWidth = 100;
-const userBlockHeight = 20;
-const userStartPosition = [230, 10];
-const ballStartPosition = [270, 30];
-let userCurrentPosition = userStartPosition.slice();
-let ballCurrentPosition = ballStartPosition.slice();
-let xPosition = randomPosition();
-let yPosition = 2;
 let timerId;
 let flag = true;
 
-function randomPosition() {
-  const arr = [-2, 2];
-  return arr[Math.floor(Math.random() * 2)];
-}
+const createUserBlock = () => {
+  user = {
+    x: BOARD_WIDTH / 2 - BLOCK_WIDTH / 2,
+    y: BOARD_HEIGHT - BLOCK_HEIGHT - MARGIN,
+    width: BLOCK_WIDTH,
+    height: BLOCK_HEIGHT,
+    dx: 10,
+  };
+};
+
+const createBall = () => {
+  ball = {
+    x: BOARD_WIDTH / 2,
+    y: BOARD_HEIGHT - BLOCK_HEIGHT - MARGIN - BALL_RADIUS,
+    r: BALL_RADIUS,
+    dx: 3 * (Math.random() * 2 - 1),
+    dy: -3,
+    speed: 4,
+  };
+};
 
 const addBlocks = () => {
-  let x = 10,
-    y = 270;
-  if (blocks.length == 0) {
-    for (let i = 1; i <= MAX_BLOCKS; i++) {
-      const block = new Block(x, y);
-      const divBlock = document.createElement("div");
-      divBlock.style.left = block.bottomLeft[0] + "px";
-      divBlock.style.bottom = block.bottomLeft[1] + "px";
-      divBlock.classList.add("block");
-      if (i <= 5) {
-        divBlock.classList.add("red");
-      } else if (i <= 10) {
-        divBlock.classList.add("green");
-      } else {
-        divBlock.classList.add("orange");
-      }
-      container.appendChild(divBlock);
-      x += 110;
-      if (i % 5 == 0) {
-        x = 10;
-        y -= 30;
-      }
-      blocks.push(block);
-    }
-  } else {
-    const blockElements = document.querySelectorAll("div.game-container > div");
-    for (let i = 0; i < blockElements.length - 2; i++) {
-      if (!blockElements[i].classList.contains("block")) {
-        blockElements[i].classList.add("block");
-      }
+  if (!blocks.length == 0) {
+    blocks = [];
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
     }
   }
-  blocksAUX = blocks.slice();
+
+  let y = MARGIN;
+  for (let r = 0; r < ROW_BLOCKS; r++) {
+    blocks[r] = new Array(COLS_BLOCKS);
+    let x = MARGIN;
+    for (let c = 0; c < COLS_BLOCKS; c++) {
+      blocks[r][c] = {
+        x: x,
+        y: y,
+        width: BLOCK_WIDTH,
+        height: BLOCK_HEIGHT,
+        broken: false,
+      };
+      const blockElement = document.createElement("div");
+      blockElement.style.left = blocks[r][c].x + "px";
+      blockElement.style.top = blocks[r][c].y + "px";
+      blockElement.classList.add("block");
+      blockElement.classList.add(`r-${r}`);
+      blockElement.classList.add(`c-${c}`);
+      if (r == 0) {
+        blockElement.classList.add("red");
+      } else if (r == 1) {
+        blockElement.classList.add("green");
+      } else {
+        blockElement.classList.add("orange");
+      }
+      container.appendChild(blockElement);
+      x += BLOCK_WIDTH + MARGIN;
+    }
+    y += BLOCK_HEIGHT + MARGIN;
+  }
+};
+
+const addUserBlock = () => {
+  createUserBlock();
+  const userBlockElement = document.createElement("div");
+  userBlockElement.classList.add("user");
+  userBlockElement.style.left = user.x + "px";
+  userBlockElement.style.top = user.y + "px";
+  container.appendChild(userBlockElement);
+};
+
+const addBall = () => {
+  createBall();
+  const ballElement = document.createElement("div");
+  ballElement.classList.add("ball");
+  container.appendChild(ballElement);
+  positionBall();
 };
 
 addBlocks();
-
-const addUserBlock = () => {
-  userBlock = document.createElement("div");
-  userBlock.classList.add("user");
-  positionUserBlock();
-  container.appendChild(userBlock);
-};
-
 addUserBlock();
-
-function positionUserBlock() {
-  userBlock.style.left = userCurrentPosition[0] + "px";
-  userBlock.style.bottom = userCurrentPosition[1] + "px";
-}
-
-function moveUser(e) {
-  switch (e.key) {
-    case "ArrowLeft":
-      if (userCurrentPosition[0] > 0) {
-        userCurrentPosition[0] -= 10;
-        positionUserBlock();
-      }
-      break;
-    case "ArrowRight":
-      if (userCurrentPosition[0] < boardWidth - userBlockWidth) {
-        userCurrentPosition[0] += 10;
-        positionUserBlock();
-      }
-      break;
-  }
-}
-
-const ball = document.createElement("div");
-ball.classList.add("ball");
-positionBall();
-container.appendChild(ball);
+addBall();
 
 function positionBall() {
-  ball.style.left = ballCurrentPosition[0] + "px";
-  ball.style.bottom = ballCurrentPosition[1] + "px";
+  const ballElement = document.querySelector(".ball");
+  ballElement.style.left = ball.x + "px";
+  ballElement.style.top = ball.y + "px";
 }
 
 function moveBall() {
-  ballCurrentPosition[0] += xPosition;
-  ballCurrentPosition[1] += yPosition;
+  ball.x += ball.dx;
+  ball.y += ball.dy;
   positionBall();
-  checkForColisions();
+  checkForCollisions();
+}
+
+function moveUser(e) {
+  const userElement = document.querySelector(".user");
+  switch (e.key) {
+    case "ArrowLeft":
+      if (user.x > 0) {
+        user.x -= user.dx;
+        userElement.style.left = user.x + "px";
+      }
+      break;
+    case "ArrowRight":
+      if (user.x < BOARD_WIDTH - user.width) {
+        user.x += user.dx;
+        userElement.style.left = user.x + "px";
+      }
+      break;
+  }
 }
 
 document.getElementById("play-pause").addEventListener("click", playPauseGame);
@@ -124,7 +142,7 @@ function playPauseGame() {
     iconButton.classList.remove("bi-pause-fill");
   } else {
     if (timerId) clearInterval(timerId);
-    timerId = setInterval(moveBall, 30);
+    timerId = setInterval(moveBall, 20);
     document.addEventListener("keydown", moveUser);
     iconButton.classList.add("bi-pause-fill");
     iconButton.classList.remove("bi-play-fill");
@@ -145,14 +163,9 @@ function restartGame() {
   flag = true;
   score = 0;
   document.getElementById("score").innerHTML = score;
-  xPosition = randomPosition();
-  yPosition = 2;
-  userCurrentPosition = userStartPosition.slice();
-  ballCurrentPosition = ballStartPosition.slice();
   addBlocks();
-  positionUserBlock();
-  positionBall();
-  document.getElementById('message').remove();
+  addUserBlock();
+  addBall();
 }
 
 function stopGame() {
@@ -161,44 +174,57 @@ function stopGame() {
   document.querySelector("#play-pause").classList.add("disabled");
 }
 
-function checkForColisions() {
-  for (let i = 0; i < blocksAUX.length; i++) {
-    if (
-      (ballCurrentPosition[0] > blocksAUX[i].bottomLeft[0] &&
-        ballCurrentPosition[0] < blocksAUX[i].bottomRight[0] &&
-        ballCurrentPosition[1] + ballDiameter > blocksAUX[i].bottomLeft[1] &&
-        ballCurrentPosition[1] <= blocksAUX[i].topLeft[1]) ||
-      (ballCurrentPosition[0] + ballDiameter == blocksAUX[i].bottomLeft[0] &&
-        ballCurrentPosition[1] > blocksAUX[i].bottomLeft[1] &&
-        ballCurrentPosition[1] < blocksAUX[i].topLeft[1])
-    ) {
-      const blockElements = document.querySelectorAll(".block");
-      blockElements[i].classList.remove("block");
-      blocksAUX.splice(i, 1);
-      changeDirection();
-      score++;
-      document.getElementById("score").innerHTML = score;
-      if (blocksAUX.length == 0) {
-        stopGame();
-        const message = document.createElement("div");
-        message.textContent = "you win!!";
-        message.classList.add("message");
-        message.classList.add("text-info");
-        message.setAttribute("id", "message");
-        container.appendChild(message);
+function checkForCollisions() {
+  // Blocks Collisions
+  for (let r = 0; r < ROW_BLOCKS; r++) {
+    for (let c = 0; c < COLS_BLOCKS; c++) {
+      let block = blocks[r][c];
+      if (!block.broken) {
+        if (
+          ball.x > block.x &&
+          ball.x < block.x + block.width &&
+          ball.y + ball.r > block.y &&
+          ball.y - ball.r < block.y + block.height
+        ) {
+          // document.getElementById("play-pause").click();
+          // const blockElement = document.querySelector(`div.r-${r}.c-${c}`);
+          // blockElement.classList.add("bg-light");
+
+          block.broken = true;
+          const blockElement = document.querySelector(`div.r-${r}.c-${c}`);
+          blockElement.classList.remove("block");
+          ball.dy = -ball.dy;
+          score++;
+          document.getElementById("score").innerHTML = score;
+        }
       }
     }
   }
 
+  // User Collisions
   if (
-    ballCurrentPosition[0] >= boardWidth - ballDiameter ||
-    ballCurrentPosition[1] >= boardHeight - ballDiameter ||
-    ballCurrentPosition[0] <= 0
+    ball.x > user.x &&
+    ball.x < user.x + user.width &&
+    ball.y + ball.r > user.y
   ) {
-    changeDirection();
+    let collidePoint = ball.x - (user.x + user.width / 2);
+    collidePoint = collidePoint / (user.width / 2);
+    let angle = (collidePoint * Math.PI) / 3;
+
+    ball.dx = ball.speed * Math.sin(angle);
+    ball.dy = -ball.speed * Math.cos(angle);
   }
 
-  if (ballCurrentPosition[1] <= 0) {
+  // Wall Collisions
+  if (ball.x + ball.r > BOARD_WIDTH || ball.x - ball.r < 0) {
+    ball.dx = -ball.dx;
+  }
+
+  if (ball.y - ball.r < 0) {
+    ball.dy = -ball.dy;
+  }
+
+  if (ball.y + ball.r > BOARD_HEIGHT) {
     stopGame();
     const message = document.createElement("div");
     message.textContent = "game over!!";
@@ -208,31 +234,14 @@ function checkForColisions() {
     container.appendChild(message);
   }
 
-  if (
-    ballCurrentPosition[0] >= userCurrentPosition[0] &&
-    ballCurrentPosition[0] <= userCurrentPosition[0] + userBlockWidth &&
-    ballCurrentPosition[1] > userCurrentPosition[1] &&
-    ballCurrentPosition[1] <= userCurrentPosition[1] + userBlockHeight
-  ) {
-    changeDirection();
-  }
-}
-
-function changeDirection() {
-  if (xPosition > 0 && yPosition > 0) {
-    yPosition = -yPosition;
-    return;
-  }
-  if (xPosition > 0 && yPosition < 0) {
-    xPosition = -xPosition;
-    return;
-  }
-  if (xPosition < 0 && yPosition < 0) {
-    yPosition = -yPosition;
-    return;
-  }
-  if (xPosition < 0 && yPosition > 0) {
-    xPosition = -xPosition;
-    return;
+  const blockElements = document.querySelectorAll("div.block");
+  if (blockElements.length == 0) {
+    stopGame();
+    const message = document.createElement("div");
+    message.textContent = "you win!!";
+    message.classList.add("message");
+    message.classList.add("text-info");
+    message.setAttribute("id", "message");
+    container.appendChild(message);
   }
 }

@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Mouse+Memoirs&family=Roboto+Slab:wght@400;600;700&display=swap');
 
+body {
+    box-sizing: border-box;
+}
+
 .bg-darkblue {
     background-color: #003566;
 }
@@ -46,8 +50,10 @@
 }
 
 .ball {
-    height: 20px;
-    width: 20px;
+    /* height: 20px;
+    width: 20px; */
+    padding: 10px;
+    transform: translate(-50%,-50%);
     border-radius: 100%;
     background-color: #dad7cd;
     position: absolute;
@@ -69,9 +75,17 @@ div.message {
     transform: translate(-50%, -50%);
     font-size: 4rem;
     font-weight: bolder;
-    font-variant: small-caps;
     text-transform: capitalize;
-    /* font-family: 'Roboto Slab', serif; */
     font-family: 'Mouse Memoirs', sans-serif;
     letter-spacing: 0.2rem;
+}
+
+div.point {
+    position: absolute;
+    left: 220px;
+    top: 30px;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    padding: 1px;
+    background-color: #dad7cd;
 }
